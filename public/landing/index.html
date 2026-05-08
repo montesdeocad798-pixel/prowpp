@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="es">
+<!--
+/**
+ * ============================================
+ *  PROWPP — WhatsApp Labor Management SaaS
+ * ============================================
+ * @author     maitxf
+ * @website    prowpp.com
+ * @version    1.0.0
+ * @license    Private — All rights reserved
+ * ============================================
+ */
+-->
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prowpp — Gestiona tu equipo desde WhatsApp</title>
+  <meta name="description" content="Fichajes con GPS, control de gastos y asesoramiento laboral. Todo desde el móvil que ya tienen tus trabajadores.">
+  <meta name="keywords" content="gestión equipos whatsapp, fichaje GPS, control gastos obra, bot whatsapp trabajadores">
+  <meta name="author" content="maitxf">
+  <meta property="og:title" content="Prowpp — Gestiona tu equipo desde WhatsApp">
+  <meta property="og:description" content="Fichajes con GPS, control de gastos y asesoramiento laboral IA. Sin apps, sin formación.">
+  <meta property="og:url" content="https://prowpp.com">
+  <meta property="og:type" content="website">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:       #0d1b3e;
+      --bg2:      #0a1530;
+      --bg3:      #111f4a;
+      --blue:     #0055cc;
+      --teal:     #00e5c0;
+      --white:    #ffffff;
+      --gray:     #8899bb;
+      --border:   rgba(255,255,255,0.08);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--white);
+      overflow-x: hidden;
+    }
+
+    /* ── UTILIDADES ── */
+    .container { max-width: 1140px; margin: 0 auto; padding: 0 24px; }
+    .grad { background: linear-gradient(90deg, #0055cc, #00e5c0); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 28px;
+      background: linear-gradient(135deg, #0055cc, #00e5c0);
+      color: white; font-weight: 700; font-size: 0.95rem;
+      border-radius: 10px; text-decoration: none; border: none; cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 24px rgba(0,229,192,0.25);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,229,192,0.35); }
+    .btn-outline {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 28px;
+      background: transparent;
+      color: white; font-weight: 600; font-size: 0.95rem;
+      border-radius: 10px; text-decoration: none;
+      border: 1.5px solid rgba(255,255,255,0.25);
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .btn-outline:hover { border-color: var(--teal); background: rgba(0,229,192,0.07); }
+
+    /* ── ANIMACIONES ── */
+    .fade-up { opacity: 0; transform: translateY(32px); transition: opacity 0.6s ease, transform 0.6s ease; }
+    .fade-up.visible { opacity: 1; transform: translateY(0); }
+    .fade-up:nth-child(2) { transition-delay: 0.1s; }
+    .fade-up:nth-child(3) { transition-delay: 0.2s; }
+    .fade-up:nth-child(4) { transition-delay: 0.3s; }
+
+    /* ── NAVBAR ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      padding: 18px 0;
+      border-bottom: 1px solid transparent;
+      transition: background 0.3s, border-color 0.3s, backdrop-filter 0.3s;
+    }
+    nav.scrolled {
+      background: rgba(13,27,62,0.92);
+      backdrop-filter: blur(12px);
+      border-color: var(--border);
+    }
+    nav .inner { display: flex; align-items: center; justify-content: space-between; }
+    .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .logo-icon {
+      width: 38px; height: 38px;
+      background: linear-gradient(135deg, #0055cc, #00e5c0);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+    }
+    .logo-text { font-size: 1.3rem; font-weight: 900; letter-spacing: 1px; }
+    .logo-text .pro { background: linear-gradient(90deg, #0055cc, #00e5c0); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .logo-text .wpp { color: white; }
+    .nav-btn { padding: 10px 22px; background: linear-gradient(135deg, #0055cc, #00e5c0); color: white; font-weight: 700; font-size: 0.875rem; border-radius: 8px; text-decoration: none; transition: opacity 0.2s; }
+    .nav-btn:hover { opacity: 0.85; }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: flex; align-items: center;
+      padding: 120px 0 80px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0,85,204,0.25) 0%, transparent 70%),
+                  radial-gradient(ellipse 50% 40% at 80% 50%, rgba(0,229,192,0.12) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+    }
+    .hero-tag {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 14px;
+      background: rgba(0,229,192,0.1);
+      border: 1px solid rgba(0,229,192,0.3);
+      border-radius: 20px;
+      font-size: 0.8rem; font-weight: 600; color: var(--teal);
+      margin-bottom: 24px;
+    }
+    .hero h1 {
+      font-size: clamp(2.2rem, 4vw, 3.4rem);
+      font-weight: 900;
+      line-height: 1.1;
+      margin-bottom: 22px;
+      letter-spacing: -0.02em;
+    }
+    .hero p {
+      font-size: 1.1rem;
+      color: var(--gray);
+      line-height: 1.7;
+      margin-bottom: 36px;
+      max-width: 480px;
+    }
+    .hero-btns { display: flex; gap: 14px; flex-wrap: wrap; }
+    .hero-trust {
+      display: flex; align-items: center; gap: 12px;
+      margin-top: 36px;
+      font-size: 0.8rem; color: var(--gray);
+    }
+    .hero-trust span { display: flex; align-items: center; gap: 6px; }
+    .hero-trust span::before { content: '✓'; color: var(--teal); font-weight: 700; }
+
+    /* PHONE MOCKUP */
+    .phone-mockup {
+      position: relative;
+      display: flex; justify-content: center;
+    }
+    .phone {
+      width: 280px;
+      background: #1a2a4a;
+      border-radius: 36px;
+      padding: 16px;
+      border: 2px solid rgba(255,255,255,0.1);
+      box-shadow: 0 32px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,229,192,0.1);
+      position: relative;
+    }
+    .phone::before {
+      content: '';
+      position: absolute;
+      inset: -2px; border-radius: 38px;
+      background: linear-gradient(135deg, rgba(0,85,204,0.4), rgba(0,229,192,0.2));
+      z-index: -1;
+    }
+    .phone-screen {
+      background: #e5ddd5;
+      border-radius: 24px;
+      overflow: hidden;
+    }
+    .phone-bar {
+      background: #075e54;
+      padding: 10px 14px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .phone-bar .av {
+      width: 30px; height: 30px;
+      background: linear-gradient(135deg, #0055cc, #00e5c0);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; font-weight: 800;
+    }
+    .phone-bar .name { font-size: 0.8rem; font-weight: 700; color: white; }
+    .phone-bar .online { font-size: 0.65rem; color: rgba(255,255,255,0.7); }
+    .phone-msgs { padding: 12px 10px; display: flex; flex-direction: column; gap: 8px; min-height: 280px; }
+    .pm { display: flex; flex-direction: column; }
+    .pm.sent { align-items: flex-end; }
+    .pm.recv { align-items: flex-start; }
+    .pm .b {
+      padding: 8px 12px; border-radius: 10px;
+      font-size: 0.72rem; line-height: 1.5; max-width: 85%;
+    }
+    .pm.sent .b { background: #dcf8c6; color: #1a1a2e; border-radius: 10px 2px 10px 10px; }
+    .pm.recv .b { background: white; color: #1a1a2e; border-radius: 2px 10px 10px 10px; }
+    .pm .t { font-size: 0.6rem; color: #9ca3af; margin-top: 2px; padding: 0 4px; }
+    .typing { display: flex; align-items: center; gap: 4px; padding: 8px 12px; background: white; border-radius: 2px 10px 10px 10px; width: fit-content; }
+    .typing span { width: 6px; height: 6px; background: #9ca3af; border-radius: 50%; animation: bounce 1.2s infinite; }
+    .typing span:nth-child(2) { animation-delay: 0.2s; }
+    .typing span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-6px)} }
+
+    /* GLOW */
+    .glow {
+      position: absolute;
+      width: 300px; height: 300px;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+    }
+    .glow-blue { background: rgba(0,85,204,0.3); top: -50px; right: -50px; }
+    .glow-teal { background: rgba(0,229,192,0.15); bottom: 0; left: -30px; }
+
+    /* ── FUNCIONES ── */
+    .funciones { padding: 100px 0; background: var(--bg2); }
+    .section-tag {
+      display: inline-block; padding: 5px 14px;
+      background: rgba(0,229,192,0.1); border: 1px solid rgba(0,229,192,0.25);
+      border-radius: 20px; font-size: 0.75rem; font-weight: 600; color: var(--teal);
+      margin-bottom: 16px;
+    }
+    .section-title { font-size: clamp(1.7rem, 3vw, 2.4rem); font-weight: 800; margin-bottom: 14px; }
+    .section-sub { color: var(--gray); font-size: 1rem; line-height: 1.7; max-width: 540px; }
+    .section-header { text-align: center; margin-bottom: 64px; }
+    .section-header .section-sub { margin: 0 auto; }
+
+    .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .card {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px 28px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.3s, border-color 0.3s;
+    }
+    .card:hover { transform: translateY(-6px); border-color: rgba(0,229,192,0.3); }
+    .card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, #0055cc, #00e5c0);
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .card:hover::before { opacity: 1; }
+    .card-icon {
+      width: 56px; height: 56px;
+      background: linear-gradient(135deg, rgba(0,85,204,0.2), rgba(0,229,192,0.15));
+      border: 1px solid rgba(0,229,192,0.2);
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+    }
+    .card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 10px; }
+    .card p { font-size: 0.875rem; color: var(--gray); line-height: 1.7; }
+    .card .tag {
+      display: inline-block; margin-top: 16px;
+      padding: 4px 10px; background: rgba(0,229,192,0.08);
+      border: 1px solid rgba(0,229,192,0.2); border-radius: 6px;
+      font-size: 0.72rem; font-weight: 600; color: var(--teal);
+    }
+
+    /* ── CÓMO FUNCIONA ── */
+    .como { padding: 100px 0; }
+    .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; margin-top: 64px; position: relative; }
+    .steps::before {
+      content: '';
+      position: absolute; top: 28px; left: 10%; right: 10%; height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(0,229,192,0.3), rgba(0,85,204,0.3), transparent);
+    }
+    .step { text-align: center; position: relative; }
+    .step-num {
+      width: 56px; height: 56px;
+      background: linear-gradient(135deg, #0055cc, #00e5c0);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; font-weight: 900;
+      margin: 0 auto 16px;
+      box-shadow: 0 0 0 6px rgba(0,85,204,0.15);
+    }
+    .step h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 8px; }
+    .step p { font-size: 0.82rem; color: var(--gray); line-height: 1.6; }
+
+    /* ── PRECIOS ── */
+    .precios { padding: 100px 0; background: var(--bg2); }
+    .precio-wrap { display: flex; justify-content: center; margin-top: 64px; }
+    .precio-card {
+      background: var(--bg3);
+      border: 1px solid rgba(0,229,192,0.3);
+      border-radius: 24px;
+      padding: 48px 44px;
+      max-width: 440px;
+      width: 100%;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 80px rgba(0,229,192,0.1);
+    }
+    .precio-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, #0055cc, #00e5c0);
+    }
+    .precio-badge {
+      display: inline-block; padding: 5px 14px;
+      background: linear-gradient(90deg, rgba(0,85,204,0.3), rgba(0,229,192,0.2));
+      border: 1px solid rgba(0,229,192,0.3);
+      border-radius: 20px; font-size: 0.75rem; font-weight: 700; color: var(--teal);
+      margin-bottom: 20px;
+    }
+    .precio-amount { font-size: 4rem; font-weight: 900; line-height: 1; margin-bottom: 4px; }
+    .precio-amount sup { font-size: 1.5rem; vertical-align: top; margin-top: 12px; }
+    .precio-amount sub { font-size: 1rem; font-weight: 500; color: var(--gray); }
+    .precio-desc { color: var(--gray); font-size: 0.875rem; margin-bottom: 32px; }
+    .precio-features { list-style: none; text-align: left; margin-bottom: 36px; }
+    .precio-features li {
+      padding: 11px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.9rem;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .precio-features li:last-child { border-bottom: none; }
+    .precio-features li::before {
+      content: '✓'; color: var(--teal);
+      font-weight: 800; font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+    .precio-note { font-size: 0.78rem; color: var(--gray); margin-top: 16px; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      padding: 48px 0 32px;
+    }
+    .footer-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 24px;
+      padding-bottom: 32px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 24px;
+    }
+    .footer-links { display: flex; gap: 24px; flex-wrap: wrap; }
+    .footer-links a { color: var(--gray); text-decoration: none; font-size: 0.85rem; transition: color 0.2s; }
+    .footer-links a:hover { color: var(--teal); }
+    .footer-copy { text-align: center; font-size: 0.8rem; color: var(--gray); }
+    .footer-copy strong { color: var(--white); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .hero-grid { grid-template-columns: 1fr; text-align: center; }
+      .hero p { margin: 0 auto 36px; }
+      .hero-btns { justify-content: center; }
+      .hero-trust { justify-content: center; flex-wrap: wrap; }
+      .phone-mockup { margin-top: 40px; }
+      .cards { grid-template-columns: 1fr; }
+      .steps { grid-template-columns: repeat(2, 1fr); }
+      .steps::before { display: none; }
+    }
+    @media (max-width: 600px) {
+      .steps { grid-template-columns: 1fr; }
+      .precio-card { padding: 32px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── NAVBAR ── -->
+<nav id="navbar">
+  <div class="container">
+    <div class="inner">
+      <a href="/" class="logo">
+        <img src="/logo.png" alt="Prowpp" style="height:72px;width:auto">
+      </a>
+      <a href="/login" class="nav-btn">Entrar →</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ── HERO ── -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-grid">
+      <div>
+        <div class="hero-tag">⚡ Sin apps · Sin formación · Solo WhatsApp</div>
+        <h1>Gestiona tu equipo<br>desde <span class="grad">WhatsApp</span></h1>
+        <p>Fichajes con GPS, control de gastos y asesoramiento laboral. Todo desde el móvil que ya tienen tus trabajadores.</p>
+        <div class="hero-btns">
+          <a href="#precios" class="btn-primary">Contratar ahora →</a>
+          <a href="#como" class="btn-outline">Ver cómo funciona</a>
+        </div>
+        <div class="hero-trust">
+          <span>Sin contrato de permanencia</span>
+          <span>Soporte en español</span>
+          <span>Listo en 5 minutos</span>
+        </div>
+      </div>
+      <div class="phone-mockup">
+        <div class="glow glow-blue"></div>
+        <div class="glow glow-teal"></div>
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="phone-bar">
+              <div class="av">🕐</div>
+              <div>
+                <div class="name">Prowpp Bot</div>
+                <div class="online">en línea</div>
+              </div>
+            </div>
+            <div class="phone-msgs">
+              <div class="pm sent"><div class="b">fichar Madrid centro</div><div class="t">08:02 ✓✓</div></div>
+              <div class="pm recv"><div class="b">⏱ <strong>Entrada registrada</strong><br>👷 Juan García<br>📍 Madrid centro<br>🕐 08:02 · Jue 8 mayo<br><br>✅ Registrado.</div><div class="t">08:02</div></div>
+              <div class="pm sent"><div class="b">mis horas</div><div class="t">17:00 ✓✓</div></div>
+              <div class="pm recv"><div class="b">📋 <strong>Semana actual</strong><br>Lun: 8h 10m · Getafe<br>Mar: 7h 55m · Madrid<br>Mié: 8h 20m · Rivas<br><br>⏱ Total: <strong>24h 25m</strong></div><div class="t">17:00</div></div>
+              <div class="pm recv"><div class="typing"><span></span><span></span><span></span></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FUNCIONES ── -->
+<section class="funciones" id="funciones">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">Funcionalidades</div>
+      <h2 class="section-title fade-up">Todo lo que necesita tu empresa</h2>
+      <p class="section-sub fade-up">Sin software complicado. Tus trabajadores ya saben usarlo.</p>
+    </div>
+    <div class="cards">
+      <div class="card fade-up">
+        <div class="card-icon">📍</div>
+        <h3>Fichaje GPS verificado</h3>
+        <p>El trabajador ficha con su ubicación real. Tú ves en el mapa dónde está. Cumple con la ley RDL 8/2019 de registro horario.</p>
+        <span class="tag">Control total</span>
+      </div>
+      <div class="card fade-up">
+        <div class="card-icon">🧾</div>
+        <h3>Gastos al instante</h3>
+        <p>Foto de ticket por WhatsApp. Nuestra IA lee el importe y lo registra automáticamente. Exporta a Excel en un clic.</p>
+        <span class="tag">IA integrada</span>
+      </div>
+      <div class="card fade-up">
+        <div class="card-icon">🤖</div>
+        <h3>Asistente laboral IA</h3>
+        <p>Pregunta lo que necesites sobre tu equipo o sobre la normativa laboral española. Respuesta inmediata, 24/7.</p>
+        <span class="tag">Claude AI</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CÓMO FUNCIONA ── -->
+<section class="como" id="como">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">Proceso</div>
+      <h2 class="section-title fade-up">En marcha en 5 minutos</h2>
+      <p class="section-sub fade-up">Sin instalaciones, sin formación, sin complicaciones.</p>
+    </div>
+    <div class="steps">
+      <div class="step fade-up">
+        <div class="step-num">1</div>
+        <h4>Contratas Prowpp</h4>
+        <p>Recibes acceso a tu panel de administración.</p>
+      </div>
+      <div class="step fade-up">
+        <div class="step-num">2</div>
+        <h4>Añades tu equipo</h4>
+        <p>Introduces el nombre y número de cada trabajador. 30 segundos por persona.</p>
+      </div>
+      <div class="step fade-up">
+        <div class="step-num">3</div>
+        <h4>Les mandas el link</h4>
+        <p>Un solo link por WhatsApp. El trabajador lo abre y ya puede fichar.</p>
+      </div>
+      <div class="step fade-up">
+        <div class="step-num">4</div>
+        <h4>Tú controlas todo</h4>
+        <p>Panel en tiempo real. Quién está en obra, horas, gastos y más.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── PRECIOS ── -->
+<section class="precios" id="precios">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">Precios</div>
+      <h2 class="section-title fade-up">Simple y sin sorpresas</h2>
+      <p class="section-sub fade-up">Un precio fijo. Trabajadores ilimitados. Sin letra pequeña.</p>
+    </div>
+    <div class="precio-wrap">
+      <div class="precio-card fade-up">
+        <div class="precio-badge">✦ Plan Pro — Más popular</div>
+        <div class="precio-amount"><sup>€</sup>30<sub>/mes</sub></div>
+        <div class="precio-desc">Trabajadores ilimitados · Sin permanencia</div>
+        <ul class="precio-features">
+          <li>Fichaje por WhatsApp (GPS incluido)</li>
+          <li>Panel de control en tiempo real</li>
+          <li>Registro de gastos con OCR automático</li>
+          <li>Asistente laboral con IA</li>
+          <li>Presupuestos por mensaje de voz</li>
+          <li>Exportar informes a Excel</li>
+          <li>Trabajadores ilimitados</li>
+          <li>Soporte en español</li>
+        </ul>
+        <a href="mailto:montesdeocad798@gmail.com?subject=Quiero contratar Prowpp" class="btn-primary" style="width:100%;justify-content:center;font-size:1rem">
+          Contratar ahora →
+        </a>
+        <p class="precio-note">Sin permanencia. Cancela cuando quieras.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <a href="/" class="logo">
+        <img src="/logo.png" alt="Prowpp" style="height:50px;width:auto">
+      </a>
+      <div class="footer-links">
+        <a href="#">Aviso legal</a>
+        <a href="#">Política de privacidad</a>
+        <a href="#">Contacto</a>
+        <a href="https://wa.me/message/prowpp" target="_blank">@prowpp_bot</a>
+      </div>
+    </div>
+    <div class="footer-copy">
+      <strong>prowpp.com</strong> · Gestión inteligente de equipos vía WhatsApp · © 2026 Prowpp. Todos los derechos reservados.
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Navbar scroll
+  const nav = document.getElementById('navbar');
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 40);
+  });
+
+  // Fade-up on scroll
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
+  }, { threshold: 0.15 });
+  document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>

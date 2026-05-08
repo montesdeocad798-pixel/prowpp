@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prowpp — Panel del Jefe</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f2f5; color: #1a1a2e; }
+
+    header {
+      background: linear-gradient(135deg, #0f0c29, #302b63);
+      color: white;
+      padding: 16px 28px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    header h1 { font-size: 1.2rem; font-weight: 700; }
+    header .empresa { font-size: 0.8rem; opacity: 0.6; }
+    header .right { margin-left: auto; display: flex; align-items: center; gap: 16px; }
+    header .user { font-size: 0.85rem; opacity: 0.8; }
+    .logout { padding: 6px 14px; background: rgba(255,255,255,0.15); border: none; color: white; border-radius: 8px; cursor: pointer; font-size: 0.8rem; }
+    .logout:hover { background: rgba(255,255,255,0.25); }
+
+    nav { background: white; border-bottom: 1px solid #e5e7eb; display: flex; padding: 0 28px; }
+    .nav-btn { padding: 14px 20px; border: none; background: none; cursor: pointer; font-size: 0.875rem; font-weight: 500; color: #6b7280; border-bottom: 2px solid transparent; }
+    .nav-btn.active { color: #302b63; border-bottom-color: #302b63; font-weight: 700; }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 24px 20px; }
+
+    section { display: none; }
+    section.active { display: block; }
+
+    .stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; margin-bottom: 24px; }
+    .stat { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); text-align: center; }
+    .stat .num { font-size: 2rem; font-weight: 800; }
+    .stat .lbl { font-size: 0.75rem; color: #6b7280; margin-top: 4px; }
+
+    .workers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .worker-card { background: white; border-radius: 12px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); border-left: 4px solid #d1d5db; }
+    .worker-card.dentro { border-left-color: #22c55e; }
+    .worker-card.fuera { border-left-color: #ef4444; }
+    .worker-card .nombre { font-weight: 600; font-size: 0.9rem; }
+    .worker-card .rol { font-size: 0.75rem; color: #9ca3af; margin: 3px 0 8px; }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; }
+    .badge.dentro { background: #dcfce7; color: #15803d; }
+    .badge.fuera { background: #fee2e2; color: #b91c1c; }
+    .badge.sin_fichar { background: #f3f4f6; color: #6b7280; }
+    .ultima { font-size: 0.72rem; color: #9ca3af; margin-top: 6px; }
+
+    .card { background: white; border-radius: 12px; padding: 22px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+    .card h2 { font-size: 0.95rem; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+
+    .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+    .tab { padding: 6px 16px; border-radius: 20px; border: 1px solid #e5e7eb; background: white; cursor: pointer; font-size: 0.82rem; font-weight: 500; color: #6b7280; }
+    .tab.active { background: #302b63; color: white; border-color: #302b63; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th { text-align: left; padding: 10px 12px; font-weight: 600; color: #6b7280; border-bottom: 2px solid #f3f4f6; font-size: 0.78rem; text-transform: uppercase; }
+    td { padding: 11px 12px; border-bottom: 1px solid #f3f4f6; }
+    tr:last-child td { border-bottom: none; }
+    .tipo-entrada { color: #15803d; font-weight: 600; }
+    .tipo-salida { color: #b91c1c; font-weight: 600; }
+    .empty { text-align: center; padding: 32px; color: #9ca3af; }
+
+    /* Trabajadores tab */
+    .form-row { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+    .form-row input, .form-row select { flex: 1; min-width: 140px; padding: 10px 14px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 0.875rem; outline: none; }
+    .form-row input:focus, .form-row select:focus { border-color: #302b63; }
+    .btn-add { padding: 10px 20px; background: #302b63; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.875rem; white-space: nowrap; }
+    .btn-del { padding: 4px 10px; background: #fee2e2; color: #b91c1c; border: none; border-radius: 6px; cursor: pointer; font-size: 0.78rem; }
+
+    .link-box { background: #f8fafc; border: 2px dashed #e5e7eb; border-radius: 10px; padding: 16px; margin-top: 16px; }
+    .link-box p { font-size: 0.82rem; color: #6b7280; margin-bottom: 8px; }
+    .link-url { font-size: 0.875rem; font-weight: 600; color: #302b63; word-break: break-all; }
+    .btn-copy { padding: 6px 14px; background: #302b63; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.78rem; margin-top: 8px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>⚡</div>
+  <div>
+    <h1>Prowpp</h1>
+    <div class="empresa" id="empresa-nombre">Cargando...</div>
+  </div>
+  <div class="right">
+    <span class="user" id="user-nombre"></span>
+    <button class="logout" onclick="location.href='/logout'">Salir</button>
+  </div>
+</header>
+
+<nav>
+  <button class="nav-btn active" onclick="showTab('estado', this)">📊 Estado</button>
+  <button class="nav-btn" onclick="showTab('fichajes', this)">⏱ Fichajes</button>
+  <button class="nav-btn" onclick="showTab('gastos', this)">💶 Gastos</button>
+  <button class="nav-btn" onclick="showTab('equipo', this)">👷 Equipo</button>
+</nav>
+
+<div class="container">
+
+  <!-- ESTADO -->
+  <section id="tab-estado" class="active">
+    <div class="stats" id="stats-bar"></div>
+    <div class="workers-grid" id="workers-estado"></div>
+  </section>
+
+  <!-- FICHAJES -->
+  <section id="tab-fichajes">
+    <div class="card">
+      <h2>⏱ Fichajes</h2>
+      <div class="tabs">
+        <button class="tab active" onclick="cambiarPeriodo('hoy', this)">Hoy</button>
+        <button class="tab" onclick="cambiarPeriodo('semana', this)">Esta semana</button>
+      </div>
+      <div id="tabla-fichajes"><p class="empty">Cargando...</p></div>
+    </div>
+  </section>
+
+  <!-- GASTOS -->
+  <section id="tab-gastos">
+    <div class="card">
+      <h2>💶 Gastos del mes</h2>
+      <div id="tabla-gastos"><p class="empty">Cargando...</p></div>
+    </div>
+  </section>
+
+  <!-- EQUIPO -->
+  <section id="tab-equipo">
+    <div class="card">
+      <h2>👷 Gestionar equipo</h2>
+      <div class="form-row">
+        <input type="text" id="w-nombre" placeholder="Nombre completo">
+        <input type="text" id="w-tel" placeholder="Teléfono (sin +34)">
+        <input type="text" id="w-rol" placeholder="Rol (ej: Electricista)">
+        <button class="btn-add" onclick="addWorker()">+ Añadir</button>
+      </div>
+      <div id="tabla-workers"><p class="empty">Cargando...</p></div>
+      <div class="link-box">
+        <p>🔗 Link para que tus trabajadores empiecen a fichar:</p>
+        <div class="link-url" id="wa-link">Cargando...</div>
+        <button class="btn-copy" onclick="copyLink()">Copiar link</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  const WA_NUMBER = '14155238886';
+
+  function fmt(ts) {
+    const d = new Date(ts);
+    return d.toLocaleDateString('es-ES', { day:'2-digit', month:'2-digit' }) + ' ' +
+           d.toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' });
+  }
+
+  function showTab(name, btn) {
+    document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    btn.classList.add('active');
+    if (name === 'fichajes') cargarFichajes('hoy');
+    if (name === 'gastos') cargarGastos();
+    if (name === 'equipo') cargarWorkers();
+  }
+
+  async function cargarEstado() {
+    const res = await fetch('/api/estado');
+    const workers = await res.json();
+    const dentro = workers.filter(w => w.estado === 'dentro').length;
+    const fuera = workers.filter(w => w.estado === 'fuera').length;
+    const sin = workers.filter(w => w.estado === 'sin_fichar').length;
+    document.getElementById('stats-bar').innerHTML = `
+      <div class="stat"><div class="num" style="color:#15803d">${dentro}</div><div class="lbl">En obra</div></div>
+      <div class="stat"><div class="num" style="color:#ef4444">${fuera}</div><div class="lbl">Han salido</div></div>
+      <div class="stat"><div class="num" style="color:#9ca3af">${sin}</div><div class="lbl">Sin fichar</div></div>
+      <div class="stat"><div class="num">${workers.length}</div><div class="lbl">Total equipo</div></div>
+    `;
+    document.getElementById('workers-estado').innerHTML = workers.map(w => `
+      <div class="worker-card ${w.estado}">
+        <div class="nombre">${w.nombre}</div>
+        <div class="rol">${w.rol}</div>
+        <span class="badge ${w.estado}">${w.estado === 'dentro' ? '✅ En obra' : w.estado === 'fuera' ? '🔴 Salió' : '⚪ Sin fichar'}</span>
+        ${w.ultimoFichaje ? `<div class="ultima">${w.ultimoFichaje.tipo === 'entrada' ? 'Entró' : 'Salió'} · ${fmt(w.ultimoFichaje.hora)}<br>${w.ultimoFichaje.lugar}</div>` : ''}
+      </div>`).join('');
+  }
+
+  async function cargarFichajes(periodo) {
+    const res = await fetch(`/api/fichajes?periodo=${periodo}`);
+    const data = await res.json();
+    const el = document.getElementById('tabla-fichajes');
+    if (!data.length) { el.innerHTML = '<p class="empty">No hay fichajes.</p>'; return; }
+    el.innerHTML = `<table><thead><tr><th>Trabajador</th><th>Tipo</th><th>Lugar</th><th>Hora</th><th>Duración</th></tr></thead><tbody>
+      ${data.map(f => `<tr>
+        <td><strong>${f.nombre}</strong><br><small style="color:#9ca3af">${f.rol}</small></td>
+        <td class="tipo-${f.tipo}">${f.tipo === 'entrada' ? '⏱ Entrada' : '🚪 Salida'}</td>
+        <td>${f.lugar || '—'}</td><td>${fmt(f.timestamp)}</td>
+        <td>${f.duracion_minutos ? Math.floor(f.duracion_minutos/60)+'h '+(f.duracion_minutos%60)+'m' : '—'}</td>
+      </tr>`).join('')}</tbody></table>`;
+  }
+
+  async function cargarGastos() {
+    const res = await fetch('/api/gastos');
+    const data = await res.json();
+    const el = document.getElementById('tabla-gastos');
+    if (!data.length) { el.innerHTML = '<p class="empty">No hay gastos este mes.</p>'; return; }
+    const total = data.reduce((s,g) => s + g.importe, 0);
+    el.innerHTML = `<table><thead><tr><th>Trabajador</th><th>Descripción</th><th>Importe</th><th>Estado</th><th>Fecha</th></tr></thead><tbody>
+      ${data.map(g => `<tr>
+        <td>${g.nombre}</td><td>${g.descripcion || '—'}</td>
+        <td><strong>${Number(g.importe).toFixed(2)}€</strong></td>
+        <td><span style="padding:2px 8px;border-radius:10px;font-size:0.75rem;background:#fef9c3;color:#854d0e">${g.estado}</span></td>
+        <td>${fmt(g.timestamp)}</td>
+      </tr>`).join('')}
+      <tr style="background:#f8fafc"><td colspan="2"><strong>TOTAL MES</strong></td><td><strong>${total.toFixed(2)}€</strong></td><td colspan="2"></td></tr>
+    </tbody></table>`;
+  }
+
+  async function cargarWorkers() {
+    const res = await fetch('/api/workers');
+    const data = await res.json();
+    const el = document.getElementById('tabla-workers');
+    if (!data.length) { el.innerHTML = '<p class="empty">No hay trabajadores aún.</p>'; return; }
+    el.innerHTML = `<table><thead><tr><th>Nombre</th><th>Teléfono</th><th>Rol</th><th></th></tr></thead><tbody>
+      ${data.map(w => `<tr>
+        <td><strong>${w.nombre}</strong></td><td>${w.telefono}</td><td>${w.rol}</td>
+        <td><button class="btn-del" onclick="delWorker(${w.id})">Eliminar</button></td>
+      </tr>`).join('')}</tbody></table>`;
+    document.getElementById('wa-link').textContent = `https://wa.me/${WA_NUMBER}`;
+  }
+
+  async function addWorker() {
+    const nombre = document.getElementById('w-nombre').value.trim();
+    const telefono = document.getElementById('w-tel').value.trim();
+    const rol = document.getElementById('w-rol').value.trim();
+    if (!nombre || !telefono) return alert('Nombre y teléfono son obligatorios');
+    await fetch('/api/workers', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ nombre, telefono, rol }) });
+    document.getElementById('w-nombre').value = '';
+    document.getElementById('w-tel').value = '';
+    document.getElementById('w-rol').value = '';
+    cargarWorkers();
+  }
+
+  async function delWorker(id) {
+    if (!confirm('¿Eliminar este trabajador?')) return;
+    await fetch(`/api/workers/${id}`, { method: 'DELETE' });
+    cargarWorkers();
+  }
+
+  function copyLink() {
+    navigator.clipboard.writeText(`https://wa.me/${WA_NUMBER}`);
+    alert('Link copiado');
+  }
+
+  function cambiarPeriodo(p, btn) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    cargarFichajes(p);
+  }
+
+  // arrancar
+  fetch('/api/workers').then(r => r.json()).then(data => {
+    if (data.length) {
+      document.getElementById('empresa-nombre').textContent = 'Panel de gestión';
+    }
+  });
+  cargarEstado();
+  setInterval(cargarEstado, 30000);
+</script>
+</body>
+</html>
