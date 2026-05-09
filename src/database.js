@@ -217,7 +217,7 @@ async function getGastosByCompany(companyId) {
     .join('workers', 'workers.id', 'gastos.worker_id')
     .where('gastos.company_id', companyId)
     .where('gastos.timestamp', '>=', inicio.toISOString())
-    .select('workers.nombre', 'gastos.importe', 'gastos.descripcion', 'gastos.estado', 'gastos.timestamp')
+    .select('gastos.id', 'workers.nombre', 'gastos.importe', 'gastos.descripcion', 'gastos.estado', 'gastos.timestamp')
     .orderBy('gastos.timestamp', 'desc');
 }
 
@@ -226,6 +226,25 @@ async function getGastosByWorker(workerId) {
   inicio.setDate(1); inicio.setHours(0, 0, 0, 0);
   return knex('gastos').where({ worker_id: workerId })
     .where('timestamp', '>=', inicio.toISOString()).orderBy('timestamp', 'desc');
+}
+
+async function updateGastoEstado(id, estado) {
+  return knex('gastos').where({ id }).update({ estado });
+}
+
+async function getStatsEmpresa(companyId) {
+  const workers = await knex('workers').where({ company_id: companyId, activo: true }).count('id as total').first();
+  const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+  const fichajesHoy = await knex('fichajes').where({ company_id: companyId }).where('timestamp', '>=', hoy.toISOString()).count('id as total').first();
+  const mesInicio = new Date(); mesInicio.setDate(1); mesInicio.setHours(0, 0, 0, 0);
+  const gastosMes = await knex('gastos').where({ company_id: companyId }).where('timestamp', '>=', mesInicio.toISOString()).sum('importe as total').first();
+  const horasMes = await knex('fichajes').where({ company_id: companyId, tipo: 'salida' }).where('timestamp', '>=', mesInicio.toISOString()).whereNotNull('duracion_minutos').sum('duracion_minutos as total').first();
+  return {
+    totalWorkers: Number(workers.total) || 0,
+    fichajesHoy: Number(fichajesHoy.total) || 0,
+    gastosMes: Number(gastosMes.total) || 0,
+    horasMes: Math.floor((Number(horasMes.total) || 0) / 60),
+  };
 }
 
 // ── ESTADO EQUIPO ────────────────────────────
@@ -251,6 +270,6 @@ module.exports = {
   getAllCompanies, createCompany, getCompanyById,
   getUserByEmail, getUserByPhone, createUser, getAllUsers,
   registrarFichaje, getFichajesByCompany, getResumenHoras,
-  registrarGasto, getGastosByCompany, getGastosByWorker,
-  getEstadoEquipo,
+  registrarGasto, getGastosByCompany, getGastosByWorker, updateGastoEstado,
+  getEstadoEquipo, getStatsEmpresa,
 };

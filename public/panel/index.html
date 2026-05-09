@@ -3,271 +3,953 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Prowpp — Panel del Jefe</title>
+  <title>Prowpp — Panel de Control</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f2f5; color: #1a1a2e; }
-
-    header {
-      background: linear-gradient(135deg, #0f0c29, #302b63);
-      color: white;
-      padding: 16px 28px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
+    :root {
+      --bg:      #f0f4f8;
+      --sidebar: #0d1b3e;
+      --sidebar2: #1a2d5a;
+      --blue:    #0055cc;
+      --teal:    #00e5c0;
+      --green:   #22c55e;
+      --red:     #ef4444;
+      --amber:   #f59e0b;
+      --white:   #ffffff;
+      --text:    #1a1a2e;
+      --muted:   #6b7280;
+      --border:  #e5e7eb;
+      --card:    #ffffff;
+      --shadow:  0 1px 8px rgba(0,0,0,0.08);
+      --grad:    linear-gradient(135deg, #0055cc, #00e5c0);
     }
-    header h1 { font-size: 1.2rem; font-weight: 700; }
-    header .empresa { font-size: 0.8rem; opacity: 0.6; }
-    header .right { margin-left: auto; display: flex; align-items: center; gap: 16px; }
-    header .user { font-size: 0.85rem; opacity: 0.8; }
-    .logout { padding: 6px 14px; background: rgba(255,255,255,0.15); border: none; color: white; border-radius: 8px; cursor: pointer; font-size: 0.8rem; }
-    .logout:hover { background: rgba(255,255,255,0.25); }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); display: flex; }
 
-    nav { background: white; border-bottom: 1px solid #e5e7eb; display: flex; padding: 0 28px; }
-    .nav-btn { padding: 14px 20px; border: none; background: none; cursor: pointer; font-size: 0.875rem; font-weight: 500; color: #6b7280; border-bottom: 2px solid transparent; }
-    .nav-btn.active { color: #302b63; border-bottom-color: #302b63; font-weight: 700; }
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: 240px; min-height: 100vh; position: fixed; left: 0; top: 0;
+      background: var(--sidebar);
+      display: flex; flex-direction: column;
+      z-index: 100;
+    }
+    .sidebar-logo {
+      padding: 24px 20px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .sidebar-logo .brand {
+      font-size: 1.4rem; font-weight: 800; color: #fff;
+      background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .sidebar-logo .empresa-name {
+      font-size: 0.72rem; color: rgba(255,255,255,0.45); margin-top: 3px; letter-spacing: 0.05em; text-transform: uppercase;
+    }
+    .sidebar-nav { flex: 1; padding: 16px 12px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 11px 14px; border-radius: 10px; margin-bottom: 4px;
+      cursor: pointer; color: rgba(255,255,255,0.6);
+      font-size: 0.875rem; font-weight: 500;
+      transition: all 0.18s;
+      border: none; background: none; width: 100%; text-align: left;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    .nav-item.active { background: var(--grad); color: #fff; box-shadow: 0 4px 16px rgba(0,85,204,0.35); }
+    .nav-item .ico { font-size: 1.1rem; width: 20px; text-align: center; }
+    .nav-badge {
+      margin-left: auto; background: var(--red); color: #fff;
+      font-size: 0.65rem; font-weight: 700; padding: 1px 7px; border-radius: 20px;
+    }
+    .sidebar-footer {
+      padding: 16px 12px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .user-box { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .user-avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: var(--grad); display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.85rem; color: #fff; flex-shrink: 0;
+    }
+    .user-info .u-name { font-size: 0.82rem; font-weight: 600; color: #fff; }
+    .user-info .u-role { font-size: 0.7rem; color: rgba(255,255,255,0.4); }
+    .btn-logout {
+      width: 100%; padding: 9px; border-radius: 8px;
+      background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3);
+      color: #fca5a5; font-size: 0.8rem; font-weight: 600; cursor: pointer;
+      transition: all 0.18s;
+    }
+    .btn-logout:hover { background: rgba(239,68,68,0.25); }
 
-    .container { max-width: 1100px; margin: 0 auto; padding: 24px 20px; }
+    /* ── MAIN ── */
+    .main {
+      margin-left: 240px; flex: 1; display: flex; flex-direction: column; min-height: 100vh;
+    }
+    .topbar {
+      background: var(--white); border-bottom: 1px solid var(--border);
+      padding: 16px 28px; display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 50; box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+    }
+    .page-title { font-size: 1.1rem; font-weight: 700; }
+    .page-sub { font-size: 0.78rem; color: var(--muted); margin-top: 1px; }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+    .status-dot { width: 8px; height: 8px; background: var(--green); border-radius: 50%; display: inline-block; margin-right: 4px; box-shadow: 0 0 6px var(--green); }
+    .status-label { font-size: 0.78rem; color: var(--muted); }
+    .refresh-btn {
+      padding: 7px 14px; border-radius: 8px; border: 1px solid var(--border);
+      background: var(--white); color: var(--muted); cursor: pointer; font-size: 0.8rem;
+      transition: all 0.18s;
+    }
+    .refresh-btn:hover { border-color: var(--blue); color: var(--blue); }
 
-    section { display: none; }
-    section.active { display: block; }
+    .content { padding: 24px 28px; flex: 1; }
 
-    .stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; margin-bottom: 24px; }
-    .stat { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); text-align: center; }
-    .stat .num { font-size: 2rem; font-weight: 800; }
-    .stat .lbl { font-size: 0.75rem; color: #6b7280; margin-top: 4px; }
+    /* ── SECTIONS ── */
+    .section { display: none; }
+    .section.active { display: block; animation: fadeIn 0.25s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-    .workers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; margin-bottom: 24px; }
-    .worker-card { background: white; border-radius: 12px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); border-left: 4px solid #d1d5db; }
-    .worker-card.dentro { border-left-color: #22c55e; }
-    .worker-card.fuera { border-left-color: #ef4444; }
-    .worker-card .nombre { font-weight: 600; font-size: 0.9rem; }
-    .worker-card .rol { font-size: 0.75rem; color: #9ca3af; margin: 3px 0 8px; }
-    .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; }
+    /* ── KPI CARDS ── */
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+    .kpi {
+      background: var(--card); border-radius: 14px; padding: 20px 22px;
+      box-shadow: var(--shadow); position: relative; overflow: hidden;
+    }
+    .kpi::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: var(--grad);
+    }
+    .kpi.green::before { background: linear-gradient(90deg, #22c55e, #86efac); }
+    .kpi.red::before { background: linear-gradient(90deg, #ef4444, #fca5a5); }
+    .kpi.amber::before { background: linear-gradient(90deg, #f59e0b, #fde68a); }
+    .kpi .kpi-val { font-size: 2rem; font-weight: 800; line-height: 1; }
+    .kpi .kpi-lbl { font-size: 0.75rem; color: var(--muted); margin-top: 6px; font-weight: 500; }
+    .kpi .kpi-ico { position: absolute; right: 18px; top: 18px; font-size: 1.6rem; opacity: 0.15; }
+
+    /* ── WORKER CARDS ── */
+    .workers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+    .wcard {
+      background: var(--card); border-radius: 12px; padding: 18px;
+      box-shadow: var(--shadow); border-left: 4px solid var(--border);
+      transition: transform 0.18s, box-shadow 0.18s;
+    }
+    .wcard:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+    .wcard.dentro { border-left-color: var(--green); }
+    .wcard.fuera { border-left-color: var(--red); }
+    .wcard .w-name { font-weight: 700; font-size: 0.9rem; }
+    .wcard .w-rol { font-size: 0.72rem; color: var(--muted); margin: 2px 0 10px; }
+    .badge {
+      display: inline-block; padding: 3px 10px; border-radius: 20px;
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.02em;
+    }
     .badge.dentro { background: #dcfce7; color: #15803d; }
     .badge.fuera { background: #fee2e2; color: #b91c1c; }
-    .badge.sin_fichar { background: #f3f4f6; color: #6b7280; }
-    .ultima { font-size: 0.72rem; color: #9ca3af; margin-top: 6px; }
+    .badge.sin_fichar { background: #f3f4f6; color: var(--muted); }
+    .badge.verificado { background: #dcfce7; color: #15803d; }
+    .badge.rechazado { background: #fee2e2; color: #b91c1c; }
+    .badge.pendiente { background: #fef9c3; color: #854d0e; }
+    .w-time { font-size: 0.7rem; color: var(--muted); margin-top: 8px; }
+    .w-loc { font-size: 0.68rem; color: var(--muted); }
 
-    .card { background: white; border-radius: 12px; padding: 22px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
-    .card h2 { font-size: 0.95rem; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    /* ── CARDS ── */
+    .card { background: var(--card); border-radius: 14px; padding: 24px; margin-bottom: 20px; box-shadow: var(--shadow); }
+    .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .card-title { font-size: 0.95rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .card-actions { display: flex; gap: 8px; align-items: center; }
 
-    .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
-    .tab { padding: 6px 16px; border-radius: 20px; border: 1px solid #e5e7eb; background: white; cursor: pointer; font-size: 0.82rem; font-weight: 500; color: #6b7280; }
-    .tab.active { background: #302b63; color: white; border-color: #302b63; }
+    /* ── TABS ── */
+    .pill-tabs { display: flex; gap: 6px; margin-bottom: 18px; flex-wrap: wrap; }
+    .pill {
+      padding: 6px 18px; border-radius: 20px; border: 1.5px solid var(--border);
+      background: var(--white); cursor: pointer; font-size: 0.82rem; font-weight: 500; color: var(--muted);
+      transition: all 0.18s;
+    }
+    .pill.active { background: var(--sidebar); color: #fff; border-color: var(--sidebar); }
 
-    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-    th { text-align: left; padding: 10px 12px; font-weight: 600; color: #6b7280; border-bottom: 2px solid #f3f4f6; font-size: 0.78rem; text-transform: uppercase; }
-    td { padding: 11px 12px; border-bottom: 1px solid #f3f4f6; }
-    tr:last-child td { border-bottom: none; }
-    .tipo-entrada { color: #15803d; font-weight: 600; }
-    .tipo-salida { color: #b91c1c; font-weight: 600; }
-    .empty { text-align: center; padding: 32px; color: #9ca3af; }
+    /* ── TABLAS ── */
+    .tbl-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; min-width: 500px; }
+    thead th {
+      text-align: left; padding: 10px 14px; font-weight: 600; color: var(--muted);
+      border-bottom: 2px solid var(--bg); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;
+      background: #f9fafb;
+    }
+    tbody td { padding: 12px 14px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: #fafbff; }
+    .empty { text-align: center; padding: 40px; color: var(--muted); font-size: 0.9rem; }
+    .tipo-entrada { color: #15803d; font-weight: 700; }
+    .tipo-salida { color: #b91c1c; font-weight: 700; }
 
-    /* Trabajadores tab */
+    /* ── BOTONES ── */
+    .btn {
+      padding: 9px 18px; border-radius: 9px; font-size: 0.83rem; font-weight: 600;
+      cursor: pointer; border: none; transition: all 0.18s; display: inline-flex; align-items: center; gap: 6px;
+    }
+    .btn-primary { background: var(--grad); color: #fff; box-shadow: 0 2px 12px rgba(0,85,204,0.25); }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 18px rgba(0,85,204,0.35); }
+    .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
+    .btn-outline:hover { border-color: var(--blue); color: var(--blue); }
+    .btn-green { background: #dcfce7; color: #15803d; border: none; padding: 5px 12px; font-size: 0.75rem; }
+    .btn-green:hover { background: #bbf7d0; }
+    .btn-red { background: #fee2e2; color: #b91c1c; border: none; padding: 5px 12px; font-size: 0.75rem; }
+    .btn-red:hover { background: #fecaca; }
+    .btn-sm { padding: 5px 12px; font-size: 0.75rem; }
+    .btn-del { background: #fee2e2; color: #b91c1c; padding: 5px 12px; font-size: 0.75rem; border-radius: 7px; cursor: pointer; border: none; font-weight: 600; }
+    .btn-del:hover { background: #fecaca; }
+    .btn-export {
+      padding: 9px 18px; border-radius: 9px; border: 1.5px solid var(--teal);
+      background: rgba(0,229,192,0.08); color: #0d9488; font-size: 0.82rem; font-weight: 600;
+      cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.18s;
+    }
+    .btn-export:hover { background: rgba(0,229,192,0.18); }
+
+    /* ── FORM ── */
     .form-row { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
-    .form-row input, .form-row select { flex: 1; min-width: 140px; padding: 10px 14px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 0.875rem; outline: none; }
-    .form-row input:focus, .form-row select:focus { border-color: #302b63; }
-    .btn-add { padding: 10px 20px; background: #302b63; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.875rem; white-space: nowrap; }
-    .btn-del { padding: 4px 10px; background: #fee2e2; color: #b91c1c; border: none; border-radius: 6px; cursor: pointer; font-size: 0.78rem; }
+    .form-row input, .form-row select {
+      flex: 1; min-width: 130px; padding: 10px 14px;
+      border: 2px solid var(--border); border-radius: 9px; font-size: 0.875rem;
+      outline: none; transition: border-color 0.18s; font-family: inherit;
+    }
+    .form-row input:focus, .form-row select:focus { border-color: var(--blue); }
+    .link-box {
+      background: #f8fafc; border: 2px dashed var(--border); border-radius: 12px;
+      padding: 18px; margin-top: 18px;
+    }
+    .link-box p { font-size: 0.82rem; color: var(--muted); margin-bottom: 8px; }
+    .link-url { font-size: 0.875rem; font-weight: 600; color: var(--blue); word-break: break-all; }
 
-    .link-box { background: #f8fafc; border: 2px dashed #e5e7eb; border-radius: 10px; padding: 16px; margin-top: 16px; }
-    .link-box p { font-size: 0.82rem; color: #6b7280; margin-bottom: 8px; }
-    .link-url { font-size: 0.875rem; font-weight: 600; color: #302b63; word-break: break-all; }
-    .btn-copy { padding: 6px 14px; background: #302b63; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.78rem; margin-top: 8px; }
+    /* ── INFORME SECTION ── */
+    .informe-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+    .informe-card {
+      background: var(--card); border-radius: 14px; padding: 24px; box-shadow: var(--shadow);
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .informe-card h3 { font-size: 0.95rem; font-weight: 700; }
+    .informe-card p { font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
+
+    /* ── CHAT IA ── */
+    .chat-wrap { display: flex; flex-direction: column; height: 500px; }
+    .chat-messages {
+      flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px;
+      background: #f8fafc; border-radius: 12px; margin-bottom: 12px;
+    }
+    .msg { display: flex; gap: 10px; max-width: 85%; }
+    .msg.user { flex-direction: row-reverse; align-self: flex-end; }
+    .msg-bubble {
+      padding: 12px 16px; border-radius: 16px; font-size: 0.875rem; line-height: 1.5;
+      white-space: pre-wrap; word-wrap: break-word;
+    }
+    .msg.bot .msg-bubble { background: #fff; border: 1px solid var(--border); color: var(--text); border-bottom-left-radius: 4px; }
+    .msg.user .msg-bubble { background: var(--grad); color: #fff; border-bottom-right-radius: 4px; }
+    .msg-avatar {
+      width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 1rem;
+    }
+    .msg.bot .msg-avatar { background: #e0f2fe; }
+    .msg.user .msg-avatar { background: var(--grad); color: #fff; font-size: 0.8rem; font-weight: 700; }
+    .chat-input-wrap { display: flex; gap: 10px; }
+    .chat-input {
+      flex: 1; padding: 12px 16px; border: 2px solid var(--border); border-radius: 12px;
+      font-size: 0.875rem; font-family: inherit; outline: none; resize: none; transition: border-color 0.18s;
+    }
+    .chat-input:focus { border-color: var(--blue); }
+    .chat-send {
+      padding: 12px 20px; border-radius: 12px; background: var(--grad); color: #fff;
+      border: none; font-size: 1rem; cursor: pointer; transition: all 0.18s;
+    }
+    .chat-send:hover { transform: scale(1.05); }
+    .chat-send:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .typing {
+      display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--muted); padding: 8px 0;
+    }
+    .typing span { width: 6px; height: 6px; background: var(--muted); border-radius: 50%; animation: bounce 1.2s infinite; }
+    .typing span:nth-child(2) { animation-delay: 0.2s; }
+    .typing span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
+
+    /* ── SUGERENCIAS CHAT ── */
+    .sugerencias { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+    .sugerencia {
+      padding: 6px 14px; border-radius: 20px; border: 1.5px solid var(--border);
+      background: #fff; color: var(--text); font-size: 0.78rem; cursor: pointer;
+      transition: all 0.18s;
+    }
+    .sugerencia:hover { border-color: var(--blue); color: var(--blue); background: #eff6ff; }
+
+    /* ── LOCATION CHIP ── */
+    .loc-chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 0.75rem; color: var(--muted);
+    }
+    .loc-chip.has-loc { color: var(--blue); cursor: pointer; }
+    .loc-chip.has-loc:hover { text-decoration: underline; }
+
+    /* ── TOTALES ── */
+    .total-row td { background: #f8fafc !important; font-weight: 700; }
+
+    /* ── LOADING ── */
+    .skeleton {
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 8px; height: 14px; margin-bottom: 8px;
+    }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
   </style>
 </head>
 <body>
 
-<header>
-  <div>⚡</div>
-  <div>
-    <h1>Prowpp</h1>
-    <div class="empresa" id="empresa-nombre">Cargando...</div>
+<!-- ═══════════════════════════════════════
+     SIDEBAR
+═══════════════════════════════════════ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="brand">Prowpp</div>
+    <div class="empresa-name" id="sb-empresa">Cargando...</div>
   </div>
-  <div class="right">
-    <span class="user" id="user-nombre"></span>
-    <button class="logout" onclick="location.href='/logout'">Salir</button>
+
+  <nav class="sidebar-nav">
+    <button class="nav-item active" onclick="goTo('dashboard', this)">
+      <span class="ico">📊</span> Dashboard
+    </button>
+    <button class="nav-item" onclick="goTo('fichajes', this)">
+      <span class="ico">⏱</span> Fichajes
+    </button>
+    <button class="nav-item" onclick="goTo('gastos', this)" id="nav-gastos">
+      <span class="ico">💶</span> Gastos
+    </button>
+    <button class="nav-item" onclick="goTo('equipo', this)">
+      <span class="ico">👷</span> Equipo
+    </button>
+    <button class="nav-item" onclick="goTo('informes', this)">
+      <span class="ico">📁</span> Informes
+    </button>
+    <button class="nav-item" onclick="goTo('asistente', this)">
+      <span class="ico">🤖</span> Asistente IA
+    </button>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="user-box">
+      <div class="user-avatar" id="u-avatar">?</div>
+      <div class="user-info">
+        <div class="u-name" id="u-name">Cargando...</div>
+        <div class="u-role">Jefe de empresa</div>
+      </div>
+    </div>
+    <button class="btn-logout" onclick="location.href='/logout'">🚪 Cerrar sesión</button>
   </div>
-</header>
+</aside>
 
-<nav>
-  <button class="nav-btn active" onclick="showTab('estado', this)">📊 Estado</button>
-  <button class="nav-btn" onclick="showTab('fichajes', this)">⏱ Fichajes</button>
-  <button class="nav-btn" onclick="showTab('gastos', this)">💶 Gastos</button>
-  <button class="nav-btn" onclick="showTab('equipo', this)">👷 Equipo</button>
-</nav>
-
-<div class="container">
-
-  <!-- ESTADO -->
-  <section id="tab-estado" class="active">
-    <div class="stats" id="stats-bar"></div>
-    <div class="workers-grid" id="workers-estado"></div>
-  </section>
-
-  <!-- FICHAJES -->
-  <section id="tab-fichajes">
-    <div class="card">
-      <h2>⏱ Fichajes</h2>
-      <div class="tabs">
-        <button class="tab active" onclick="cambiarPeriodo('hoy', this)">Hoy</button>
-        <button class="tab" onclick="cambiarPeriodo('semana', this)">Esta semana</button>
-      </div>
-      <div id="tabla-fichajes"><p class="empty">Cargando...</p></div>
+<!-- ═══════════════════════════════════════
+     MAIN
+═══════════════════════════════════════ -->
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div class="page-title" id="page-title">Dashboard</div>
+      <div class="page-sub" id="page-sub">Vista general de tu equipo</div>
     </div>
-  </section>
-
-  <!-- GASTOS -->
-  <section id="tab-gastos">
-    <div class="card">
-      <h2>💶 Gastos del mes</h2>
-      <div id="tabla-gastos"><p class="empty">Cargando...</p></div>
+    <div class="topbar-right">
+      <div><span class="status-dot"></span><span class="status-label">En tiempo real</span></div>
+      <button class="refresh-btn" onclick="refreshCurrent()">↻ Actualizar</button>
     </div>
-  </section>
+  </div>
 
-  <!-- EQUIPO -->
-  <section id="tab-equipo">
-    <div class="card">
-      <h2>👷 Gestionar equipo</h2>
-      <div class="form-row">
-        <input type="text" id="w-nombre" placeholder="Nombre completo">
-        <input type="text" id="w-tel" placeholder="Teléfono (sin +34)">
-        <input type="text" id="w-rol" placeholder="Rol (ej: Electricista)">
-        <button class="btn-add" onclick="addWorker()">+ Añadir</button>
+  <div class="content">
+
+    <!-- ── DASHBOARD ── -->
+    <div class="section active" id="sec-dashboard">
+      <div class="kpi-grid" id="kpi-grid">
+        <div class="kpi"><div class="skeleton" style="width:60px;height:32px"></div><div class="skeleton" style="width:100px;height:12px;margin-top:10px"></div></div>
+        <div class="kpi green"><div class="skeleton" style="width:60px;height:32px"></div><div class="skeleton" style="width:100px;height:12px;margin-top:10px"></div></div>
+        <div class="kpi red"><div class="skeleton" style="width:60px;height:32px"></div><div class="skeleton" style="width:100px;height:12px;margin-top:10px"></div></div>
+        <div class="kpi amber"><div class="skeleton" style="width:60px;height:32px"></div><div class="skeleton" style="width:100px;height:12px;margin-top:10px"></div></div>
       </div>
-      <div id="tabla-workers"><p class="empty">Cargando...</p></div>
-      <div class="link-box">
-        <p>🔗 Link para que tus trabajadores empiecen a fichar:</p>
-        <div class="link-url" id="wa-link">Cargando...</div>
-        <button class="btn-copy" onclick="copyLink()">Copiar link</button>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">👷 Estado del equipo en tiempo real</div>
+          <small style="color:var(--muted);font-size:0.75rem">Auto-actualización cada 30s</small>
+        </div>
+        <div class="workers-grid" id="workers-grid">
+          <div class="empty">Cargando equipo...</div>
+        </div>
       </div>
     </div>
-  </section>
 
-</div>
+    <!-- ── FICHAJES ── -->
+    <div class="section" id="sec-fichajes">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">⏱ Registro de fichajes GPS</div>
+          <div class="card-actions">
+            <button class="btn-export" onclick="exportFichajes()">⬇ Exportar CSV</button>
+          </div>
+        </div>
+        <div class="pill-tabs">
+          <button class="pill active" onclick="cambiarPeriodo('hoy', this)">Hoy</button>
+          <button class="pill" onclick="cambiarPeriodo('semana', this)">Esta semana</button>
+        </div>
+        <div class="tbl-wrap" id="tbl-fichajes"><p class="empty">Cargando...</p></div>
+      </div>
+    </div>
+
+    <!-- ── GASTOS ── -->
+    <div class="section" id="sec-gastos">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">💶 Gastos con OCR automático</div>
+          <div class="card-actions">
+            <button class="btn-export" onclick="exportGastos()">⬇ Exportar CSV</button>
+          </div>
+        </div>
+        <div class="tbl-wrap" id="tbl-gastos"><p class="empty">Cargando...</p></div>
+      </div>
+    </div>
+
+    <!-- ── EQUIPO ── -->
+    <div class="section" id="sec-equipo">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">👷 Gestionar trabajadores</div>
+          <div class="card-actions">
+            <span style="font-size:0.78rem;color:var(--muted)" id="worker-count"></span>
+          </div>
+        </div>
+        <div class="form-row">
+          <input type="text" id="w-nombre" placeholder="Nombre completo">
+          <input type="text" id="w-tel" placeholder="Teléfono (sin +34)" maxlength="9">
+          <input type="text" id="w-rol" placeholder="Rol (ej: Electricista)">
+          <button class="btn btn-primary" onclick="addWorker()">+ Añadir</button>
+        </div>
+        <div class="tbl-wrap" id="tbl-workers"><p class="empty">Cargando...</p></div>
+        <div class="link-box">
+          <p>🔗 <strong>Comparte este link</strong> con tus trabajadores para que empiecen a fichar por WhatsApp:</p>
+          <div class="link-url" id="wa-link">Cargando...</div>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="btn btn-outline btn-sm" onclick="copyLink()">📋 Copiar link</button>
+            <button class="btn btn-primary btn-sm" onclick="shareWhatsApp()">📲 Enviar por WhatsApp</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── INFORMES ── -->
+    <div class="section" id="sec-informes">
+      <div style="margin-bottom:20px">
+        <div style="font-size:1rem;font-weight:700;margin-bottom:4px">📁 Exportar informes</div>
+        <div style="font-size:0.82rem;color:var(--muted)">Descarga todos los datos de tu empresa en formato Excel/CSV listo para usar.</div>
+      </div>
+      <div class="informe-grid">
+        <div class="informe-card">
+          <div style="font-size:2rem">⏱</div>
+          <h3>Fichajes del día</h3>
+          <p>Exporta todos los fichajes de hoy con nombre, hora, ubicación GPS y duración.</p>
+          <button class="btn-export" onclick="exportFichajesPeriodo('hoy')">⬇ Descargar CSV — Hoy</button>
+        </div>
+        <div class="informe-card">
+          <div style="font-size:2rem">📅</div>
+          <h3>Fichajes de la semana</h3>
+          <p>Informe semanal completo con horas totales por trabajador y ubicaciones.</p>
+          <button class="btn-export" onclick="exportFichajesPeriodo('semana')">⬇ Descargar CSV — Semana</button>
+        </div>
+        <div class="informe-card">
+          <div style="font-size:2rem">💶</div>
+          <h3>Gastos del mes</h3>
+          <p>Todos los gastos registrados con OCR: importe, descripción, estado y trabajador.</p>
+          <button class="btn-export" onclick="exportGastos()">⬇ Descargar CSV — Mes</button>
+        </div>
+        <div class="informe-card">
+          <div style="font-size:2rem">👷</div>
+          <h3>Directorio del equipo</h3>
+          <p>Lista completa de trabajadores con nombre, teléfono y rol asignado.</p>
+          <button class="btn-export" onclick="exportWorkers()">⬇ Descargar CSV — Equipo</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ASISTENTE IA ── -->
+    <div class="section" id="sec-asistente">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🤖 Asistente laboral con IA</div>
+          <div class="card-actions">
+            <button class="btn btn-outline btn-sm" onclick="clearChat()">🗑 Limpiar</button>
+          </div>
+        </div>
+        <p style="font-size:0.82rem;color:var(--muted);margin-bottom:14px">
+          Tu asistente experto en legislación laboral española para obras y oficios. Pregunta lo que necesites.
+        </p>
+        <div class="sugerencias">
+          <button class="sugerencia" onclick="sugerir('¿Cuántas horas extras puede hacer un trabajador al mes?')">⏰ Horas extras</button>
+          <button class="sugerencia" onclick="sugerir('¿Cuántos días de vacaciones tiene derecho un trabajador?')">🏖 Vacaciones</button>
+          <button class="sugerencia" onclick="sugerir('¿Cuándo es obligatorio el contrato por escrito?')">📄 Contratos</button>
+          <button class="sugerencia" onclick="sugerir('¿Qué gastos de obra son deducibles en el IRPF?')">💰 Gastos deducibles</button>
+          <button class="sugerencia" onclick="sugerir('¿Cómo funciona la seguridad social para autónomos en construcción?')">🏗 Autónomos</button>
+          <button class="sugerencia" onclick="sugerir('¿Qué hacer si un trabajador no se presenta sin avisar?')">❓ Absentismo</button>
+        </div>
+        <div class="chat-wrap">
+          <div class="chat-messages" id="chat-messages">
+            <div class="msg bot">
+              <div class="msg-avatar">🤖</div>
+              <div class="msg-bubble">¡Hola! Soy tu asistente laboral de Prowpp. Estoy especializado en legislación española para empresas de construcción, electricidad y fontanería.<br><br>Puedo ayudarte con dudas sobre contratos, jornadas, vacaciones, nóminas, seguridad en obra y más. ¿En qué te puedo ayudar hoy?</div>
+            </div>
+          </div>
+          <div class="chat-input-wrap">
+            <textarea class="chat-input" id="chat-input" placeholder="Escribe tu consulta laboral..." rows="1"
+              onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();enviarMensaje()}"
+              oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
+            <button class="chat-send" id="chat-send" onclick="enviarMensaje()">➤</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
 
 <script>
-  const WA_NUMBER = '14155238886';
+// ═══════════════════════════════════════
+//  ESTADO GLOBAL
+// ═══════════════════════════════════════
+let currentSection = 'dashboard';
+let fichajosData = [];
+let gastosData = [];
+let workersData = [];
+let chatHistorial = [];
+const WA_NUMBER = '14155238886';
+const PAGE_TITLES = {
+  dashboard: ['Dashboard', 'Vista general de tu equipo'],
+  fichajes:  ['Fichajes GPS', 'Entradas y salidas con ubicación'],
+  gastos:    ['Gastos OCR', 'Gastos registrados por WhatsApp'],
+  equipo:    ['Equipo', 'Gestión de trabajadores'],
+  informes:  ['Informes', 'Exportar datos a CSV/Excel'],
+  asistente: ['Asistente IA', 'Consultas laborales en español'],
+};
 
-  function fmt(ts) {
-    const d = new Date(ts);
-    return d.toLocaleDateString('es-ES', { day:'2-digit', month:'2-digit' }) + ' ' +
-           d.toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' });
-  }
+// ═══════════════════════════════════════
+//  NAVEGACIÓN
+// ═══════════════════════════════════════
+function goTo(name, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('sec-' + name).classList.add('active');
+  btn.classList.add('active');
+  currentSection = name;
+  const [title, sub] = PAGE_TITLES[name];
+  document.getElementById('page-title').textContent = title;
+  document.getElementById('page-sub').textContent = sub;
+  if (name === 'fichajes') cargarFichajes('hoy');
+  if (name === 'gastos') cargarGastos();
+  if (name === 'equipo') cargarEquipo();
+  if (name === 'informes') { cargarFichajes('hoy'); cargarGastos(); cargarEquipo(); }
+}
 
-  function showTab(name, btn) {
-    document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('tab-' + name).classList.add('active');
-    btn.classList.add('active');
-    if (name === 'fichajes') cargarFichajes('hoy');
-    if (name === 'gastos') cargarGastos();
-    if (name === 'equipo') cargarWorkers();
-  }
+function refreshCurrent() {
+  if (currentSection === 'dashboard') cargarDashboard();
+  else if (currentSection === 'fichajes') cargarFichajes(periodoActivo);
+  else if (currentSection === 'gastos') cargarGastos();
+  else if (currentSection === 'equipo') cargarEquipo();
+}
 
-  async function cargarEstado() {
-    const res = await fetch('/api/estado');
-    const workers = await res.json();
+// ═══════════════════════════════════════
+//  UTILIDADES
+// ═══════════════════════════════════════
+function fmt(ts) {
+  if (!ts) return '—';
+  const d = new Date(ts);
+  return d.toLocaleDateString('es-ES', { day:'2-digit', month:'2-digit' }) + ' ' +
+         d.toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' });
+}
+function fmtDur(min) {
+  if (!min) return '—';
+  return Math.floor(min/60) + 'h ' + (min % 60) + 'm';
+}
+function fmtImporte(n) {
+  return Number(n).toFixed(2).replace('.', ',') + ' €';
+}
+
+function csvDownload(rows, headers, filename) {
+  const bom = '﻿';
+  const head = headers.join(';');
+  const body = rows.map(r => headers.map(h => {
+    const v = r[h] !== undefined ? String(r[h]) : '';
+    return '"' + v.replace(/"/g, '""') + '"';
+  }).join(';')).join('\r\n');
+  const blob = new Blob([bom + head + '\r\n' + body], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ═══════════════════════════════════════
+//  CARGA DE DATOS
+// ═══════════════════════════════════════
+async function cargarMe() {
+  try {
+    const r = await fetch('/api/me');
+    const d = await r.json();
+    document.getElementById('sb-empresa').textContent = d.empresa || 'Mi empresa';
+    document.getElementById('u-name').textContent = d.nombre || '';
+    document.getElementById('u-avatar').textContent = (d.nombre || 'U').charAt(0).toUpperCase();
+  } catch(e) {}
+}
+
+async function cargarDashboard() {
+  try {
+    const [statsR, estadoR] = await Promise.all([
+      fetch('/api/stats'), fetch('/api/estado'),
+    ]);
+    const stats = await statsR.json();
+    const workers = await estadoR.json();
+
     const dentro = workers.filter(w => w.estado === 'dentro').length;
-    const fuera = workers.filter(w => w.estado === 'fuera').length;
-    const sin = workers.filter(w => w.estado === 'sin_fichar').length;
-    document.getElementById('stats-bar').innerHTML = `
-      <div class="stat"><div class="num" style="color:#15803d">${dentro}</div><div class="lbl">En obra</div></div>
-      <div class="stat"><div class="num" style="color:#ef4444">${fuera}</div><div class="lbl">Han salido</div></div>
-      <div class="stat"><div class="num" style="color:#9ca3af">${sin}</div><div class="lbl">Sin fichar</div></div>
-      <div class="stat"><div class="num">${workers.length}</div><div class="lbl">Total equipo</div></div>
+    const fuera  = workers.filter(w => w.estado === 'fuera').length;
+    const sin    = workers.filter(w => w.estado === 'sin_fichar').length;
+
+    document.getElementById('kpi-grid').innerHTML = `
+      <div class="kpi">
+        <span class="kpi-ico">👷</span>
+        <div class="kpi-val">${stats.totalWorkers}</div>
+        <div class="kpi-lbl">Trabajadores totales</div>
+      </div>
+      <div class="kpi green">
+        <span class="kpi-ico">✅</span>
+        <div class="kpi-val" style="color:#15803d">${dentro}</div>
+        <div class="kpi-lbl">En obra ahora</div>
+      </div>
+      <div class="kpi red">
+        <span class="kpi-ico">🕐</span>
+        <div class="kpi-val" style="color:#b91c1c">${stats.fichajesHoy}</div>
+        <div class="kpi-lbl">Fichajes hoy</div>
+      </div>
+      <div class="kpi amber">
+        <span class="kpi-ico">💶</span>
+        <div class="kpi-val" style="color:#92400e">${fmtImporte(stats.gastosMes)}</div>
+        <div class="kpi-lbl">Gastos este mes</div>
+      </div>
     `;
-    document.getElementById('workers-estado').innerHTML = workers.map(w => `
-      <div class="worker-card ${w.estado}">
-        <div class="nombre">${w.nombre}</div>
-        <div class="rol">${w.rol}</div>
-        <span class="badge ${w.estado}">${w.estado === 'dentro' ? '✅ En obra' : w.estado === 'fuera' ? '🔴 Salió' : '⚪ Sin fichar'}</span>
-        ${w.ultimoFichaje ? `<div class="ultima">${w.ultimoFichaje.tipo === 'entrada' ? 'Entró' : 'Salió'} · ${fmt(w.ultimoFichaje.hora)}<br>${w.ultimoFichaje.lugar}</div>` : ''}
-      </div>`).join('');
-  }
 
-  async function cargarFichajes(periodo) {
-    const res = await fetch(`/api/fichajes?periodo=${periodo}`);
-    const data = await res.json();
-    const el = document.getElementById('tabla-fichajes');
-    if (!data.length) { el.innerHTML = '<p class="empty">No hay fichajes.</p>'; return; }
-    el.innerHTML = `<table><thead><tr><th>Trabajador</th><th>Tipo</th><th>Lugar</th><th>Hora</th><th>Duración</th></tr></thead><tbody>
-      ${data.map(f => `<tr>
-        <td><strong>${f.nombre}</strong><br><small style="color:#9ca3af">${f.rol}</small></td>
+    document.getElementById('workers-grid').innerHTML = workers.length
+      ? workers.map(w => `
+        <div class="wcard ${w.estado}">
+          <div class="w-name">${w.nombre}</div>
+          <div class="w-rol">${w.rol}</div>
+          <span class="badge ${w.estado}">
+            ${w.estado === 'dentro' ? '✅ En obra' : w.estado === 'fuera' ? '🔴 Salió' : '⚪ Sin fichar'}
+          </span>
+          ${w.ultimoFichaje ? `
+            <div class="w-time">${w.ultimoFichaje.tipo === 'entrada' ? '⏱ Entró' : '🚪 Salió'} · ${fmt(w.ultimoFichaje.hora)}</div>
+            ${w.ultimoFichaje.lugar && w.ultimoFichaje.lugar !== 'Sin especificar'
+              ? `<div class="w-loc">📍 ${w.ultimoFichaje.lugar}</div>` : ''}
+          ` : ''}
+        </div>
+      `).join('')
+      : '<div class="empty">Aún no tienes trabajadores.<br>Añádelos en la sección <strong>Equipo</strong>.</div>';
+  } catch(e) {
+    document.getElementById('workers-grid').innerHTML = '<div class="empty">Error cargando datos.</div>';
+  }
+}
+
+let periodoActivo = 'hoy';
+async function cargarFichajes(periodo) {
+  periodoActivo = periodo;
+  const el = document.getElementById('tbl-fichajes');
+  el.innerHTML = '<p class="empty">Cargando...</p>';
+  try {
+    const r = await fetch(`/api/fichajes?periodo=${periodo}`);
+    fichajosData = await r.json();
+    if (!fichajosData.length) { el.innerHTML = '<p class="empty">No hay fichajes para este período.</p>'; return; }
+    el.innerHTML = `<table>
+      <thead><tr>
+        <th>Trabajador</th><th>Tipo</th><th>Ubicación GPS</th><th>Hora</th><th>Duración</th>
+      </tr></thead>
+      <tbody>${fichajosData.map(f => `<tr>
+        <td><strong>${f.nombre}</strong><br><small style="color:var(--muted)">${f.rol}</small></td>
         <td class="tipo-${f.tipo}">${f.tipo === 'entrada' ? '⏱ Entrada' : '🚪 Salida'}</td>
-        <td>${f.lugar || '—'}</td><td>${fmt(f.timestamp)}</td>
-        <td>${f.duracion_minutos ? Math.floor(f.duracion_minutos/60)+'h '+(f.duracion_minutos%60)+'m' : '—'}</td>
-      </tr>`).join('')}</tbody></table>`;
-  }
+        <td>${renderLoc(f.lugar)}</td>
+        <td>${fmt(f.timestamp)}</td>
+        <td>${fmtDur(f.duracion_minutos)}</td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  } catch(e) { el.innerHTML = '<p class="empty">Error cargando fichajes.</p>'; }
+}
 
-  async function cargarGastos() {
-    const res = await fetch('/api/gastos');
-    const data = await res.json();
-    const el = document.getElementById('tabla-gastos');
-    if (!data.length) { el.innerHTML = '<p class="empty">No hay gastos este mes.</p>'; return; }
-    const total = data.reduce((s,g) => s + g.importe, 0);
-    el.innerHTML = `<table><thead><tr><th>Trabajador</th><th>Descripción</th><th>Importe</th><th>Estado</th><th>Fecha</th></tr></thead><tbody>
-      ${data.map(g => `<tr>
-        <td>${g.nombre}</td><td>${g.descripcion || '—'}</td>
-        <td><strong>${Number(g.importe).toFixed(2)}€</strong></td>
-        <td><span style="padding:2px 8px;border-radius:10px;font-size:0.75rem;background:#fef9c3;color:#854d0e">${g.estado}</span></td>
-        <td>${fmt(g.timestamp)}</td>
-      </tr>`).join('')}
-      <tr style="background:#f8fafc"><td colspan="2"><strong>TOTAL MES</strong></td><td><strong>${total.toFixed(2)}€</strong></td><td colspan="2"></td></tr>
-    </tbody></table>`;
+function renderLoc(lugar) {
+  if (!lugar || lugar === 'Sin especificar') return '<span style="color:var(--muted)">—</span>';
+  const coords = lugar.match(/(-?\d+\.\d+),\s*(-?\d+\.\d+)/);
+  if (coords) {
+    const [,lat,lng] = coords;
+    return `<span class="loc-chip has-loc" onclick="window.open('https://maps.google.com/?q=${lat},${lng}','_blank')">📍 Ver mapa</span>`;
   }
+  return `<span class="loc-chip">📍 ${lugar}</span>`;
+}
 
-  async function cargarWorkers() {
-    const res = await fetch('/api/workers');
-    const data = await res.json();
-    const el = document.getElementById('tabla-workers');
-    if (!data.length) { el.innerHTML = '<p class="empty">No hay trabajadores aún.</p>'; return; }
-    el.innerHTML = `<table><thead><tr><th>Nombre</th><th>Teléfono</th><th>Rol</th><th></th></tr></thead><tbody>
-      ${data.map(w => `<tr>
-        <td><strong>${w.nombre}</strong></td><td>${w.telefono}</td><td>${w.rol}</td>
-        <td><button class="btn-del" onclick="delWorker(${w.id})">Eliminar</button></td>
-      </tr>`).join('')}</tbody></table>`;
-    document.getElementById('wa-link').textContent = `https://wa.me/${WA_NUMBER}`;
-  }
+async function cargarGastos() {
+  const el = document.getElementById('tbl-gastos');
+  el.innerHTML = '<p class="empty">Cargando...</p>';
+  try {
+    const r = await fetch('/api/gastos');
+    gastosData = await r.json();
 
-  async function addWorker() {
-    const nombre = document.getElementById('w-nombre').value.trim();
-    const telefono = document.getElementById('w-tel').value.trim();
-    const rol = document.getElementById('w-rol').value.trim();
-    if (!nombre || !telefono) return alert('Nombre y teléfono son obligatorios');
-    await fetch('/api/workers', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ nombre, telefono, rol }) });
-    document.getElementById('w-nombre').value = '';
-    document.getElementById('w-tel').value = '';
-    document.getElementById('w-rol').value = '';
-    cargarWorkers();
-  }
+    // badge pendiente en nav
+    const pendientes = gastosData.filter(g => g.estado === 'pendiente').length;
+    const navGastos = document.getElementById('nav-gastos');
+    const existing = navGastos.querySelector('.nav-badge');
+    if (existing) existing.remove();
+    if (pendientes > 0) navGastos.insertAdjacentHTML('beforeend', `<span class="nav-badge">${pendientes}</span>`);
 
-  async function delWorker(id) {
-    if (!confirm('¿Eliminar este trabajador?')) return;
-    await fetch(`/api/workers/${id}`, { method: 'DELETE' });
-    cargarWorkers();
-  }
+    if (!gastosData.length) { el.innerHTML = '<p class="empty">No hay gastos registrados este mes.</p>'; return; }
+    const total = gastosData.reduce((s,g) => s + Number(g.importe), 0);
+    el.innerHTML = `<table>
+      <thead><tr>
+        <th>Trabajador</th><th>Descripción (OCR)</th><th>Importe</th><th>Estado</th><th>Fecha</th><th>Acciones</th>
+      </tr></thead>
+      <tbody>
+        ${gastosData.map((g, i) => `<tr>
+          <td><strong>${g.nombre}</strong></td>
+          <td>${g.descripcion || '—'}</td>
+          <td><strong>${fmtImporte(g.importe)}</strong></td>
+          <td><span class="badge ${g.estado}">${g.estado === 'verificado' ? '✅ Verificado' : g.estado === 'rechazado' ? '❌ Rechazado' : '⏳ Pendiente'}</span></td>
+          <td>${fmt(g.timestamp)}</td>
+          <td style="white-space:nowrap">
+            ${g.estado === 'pendiente' ? `
+              <button class="btn btn-green btn-sm" onclick="cambiarEstadoGasto(${i}, 'verificado')">✅ Aprobar</button>
+              <button class="btn btn-red btn-sm" onclick="cambiarEstadoGasto(${i}, 'rechazado')">❌ Rechazar</button>
+            ` : `<button class="btn btn-outline btn-sm" onclick="cambiarEstadoGasto(${i}, 'pendiente')">↩ Resetear</button>`}
+          </td>
+        </tr>`).join('')}
+        <tr class="total-row">
+          <td colspan="2"><strong>TOTAL MES</strong></td>
+          <td><strong>${fmtImporte(total)}</strong></td>
+          <td colspan="3"></td>
+        </tr>
+      </tbody>
+    </table>`;
+  } catch(e) { el.innerHTML = '<p class="empty">Error cargando gastos.</p>'; }
+}
 
-  function copyLink() {
-    navigator.clipboard.writeText(`https://wa.me/${WA_NUMBER}`);
-    alert('Link copiado');
-  }
+async function cambiarEstadoGasto(idx, estado) {
+  const g = gastosData[idx];
+  if (!g || !g.id) return;
+  try {
+    await fetch(`/api/gastos/${g.id}/estado`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ estado }),
+    });
+  } catch(e) {}
+  await cargarGastos();
+}
 
-  function cambiarPeriodo(p, btn) {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    btn.classList.add('active');
-    cargarFichajes(p);
-  }
+async function cargarEquipo() {
+  const el = document.getElementById('tbl-workers');
+  el.innerHTML = '<p class="empty">Cargando...</p>';
+  try {
+    const r = await fetch('/api/workers');
+    workersData = await r.json();
+    document.getElementById('worker-count').textContent = `${workersData.length} trabajador${workersData.length !== 1 ? 'es' : ''}`;
 
-  // arrancar
-  fetch('/api/workers').then(r => r.json()).then(data => {
-    if (data.length) {
-      document.getElementById('empresa-nombre').textContent = 'Panel de gestión';
+    const waLink = `https://wa.me/${WA_NUMBER}`;
+    document.getElementById('wa-link').textContent = waLink;
+
+    if (!workersData.length) {
+      el.innerHTML = '<p class="empty">No hay trabajadores aún. Añade el primero arriba.</p>';
+      return;
     }
+    el.innerHTML = `<table>
+      <thead><tr><th>Nombre</th><th>Teléfono</th><th>Rol</th><th>WhatsApp</th><th></th></tr></thead>
+      <tbody>${workersData.map(w => `<tr>
+        <td><strong>${w.nombre}</strong></td>
+        <td>${w.telefono}</td>
+        <td>${w.rol}</td>
+        <td><a href="https://wa.me/${w.telefono.replace(/\D/g,'')}" target="_blank" style="color:var(--green);font-size:0.8rem">💬 Abrir chat</a></td>
+        <td><button class="btn-del" onclick="delWorker(${w.id},'${w.nombre}')">Eliminar</button></td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  } catch(e) { el.innerHTML = '<p class="empty">Error cargando equipo.</p>'; }
+}
+
+// ═══════════════════════════════════════
+//  ACCIONES
+// ═══════════════════════════════════════
+function cambiarPeriodo(p, btn) {
+  document.querySelectorAll('.pill').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  cargarFichajes(p);
+}
+
+async function addWorker() {
+  const nombre = document.getElementById('w-nombre').value.trim();
+  const telefono = document.getElementById('w-tel').value.trim();
+  const rol = document.getElementById('w-rol').value.trim();
+  if (!nombre || !telefono) return alert('Nombre y teléfono son obligatorios');
+  if (!/^\d{9}$/.test(telefono)) return alert('El teléfono debe tener 9 dígitos (sin el +34)');
+  await fetch('/api/workers', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ nombre, telefono, rol }),
   });
-  cargarEstado();
-  setInterval(cargarEstado, 30000);
+  document.getElementById('w-nombre').value = '';
+  document.getElementById('w-tel').value = '';
+  document.getElementById('w-rol').value = '';
+  cargarEquipo();
+  cargarDashboard();
+}
+
+async function delWorker(id, nombre) {
+  if (!confirm(`¿Eliminar a ${nombre}? Esta acción no se puede deshacer.`)) return;
+  await fetch(`/api/workers/${id}`, { method: 'DELETE' });
+  cargarEquipo();
+  cargarDashboard();
+}
+
+function copyLink() {
+  const url = `https://wa.me/${WA_NUMBER}`;
+  navigator.clipboard.writeText(url).then(() => alert('✅ Link copiado al portapapeles'));
+}
+
+function shareWhatsApp() {
+  const texto = encodeURIComponent(`Hola! Para fichar tu entrada y salida en la obra, escríbeme aquí en WhatsApp:\nhttps://wa.me/${WA_NUMBER}\nEscribe "fichar" para empezar.`);
+  window.open(`https://wa.me/?text=${texto}`, '_blank');
+}
+
+// ═══════════════════════════════════════
+//  EXPORTS CSV
+// ═══════════════════════════════════════
+function exportFichajes() { exportFichajesPeriodo(periodoActivo); }
+
+async function exportFichajesPeriodo(periodo) {
+  let data = fichajosData;
+  if (!data.length || periodoActivo !== periodo) {
+    const r = await fetch(`/api/fichajes?periodo=${periodo}`);
+    data = await r.json();
+  }
+  const headers = ['nombre', 'rol', 'tipo', 'lugar', 'timestamp', 'duracion_minutos'];
+  const rows = data.map(f => ({
+    nombre: f.nombre,
+    rol: f.rol,
+    tipo: f.tipo,
+    lugar: f.lugar || '',
+    timestamp: new Date(f.timestamp).toLocaleString('es-ES'),
+    duracion_minutos: f.duracion_minutos || '',
+  }));
+  csvDownload(rows, ['nombre','rol','tipo','lugar','timestamp','duracion_minutos'],
+    `prowpp-fichajes-${periodo}-${new Date().toISOString().slice(0,10)}.csv`);
+}
+
+async function exportGastos() {
+  let data = gastosData;
+  if (!data.length) {
+    const r = await fetch('/api/gastos');
+    data = await r.json();
+  }
+  const rows = data.map(g => ({
+    nombre: g.nombre,
+    descripcion: g.descripcion || '',
+    importe: Number(g.importe).toFixed(2),
+    estado: g.estado,
+    fecha: new Date(g.timestamp).toLocaleString('es-ES'),
+  }));
+  csvDownload(rows, ['nombre','descripcion','importe','estado','fecha'],
+    `prowpp-gastos-${new Date().toISOString().slice(0,7)}.csv`);
+}
+
+async function exportWorkers() {
+  let data = workersData;
+  if (!data.length) {
+    const r = await fetch('/api/workers');
+    data = await r.json();
+  }
+  const rows = data.map(w => ({ nombre: w.nombre, telefono: w.telefono, rol: w.rol }));
+  csvDownload(rows, ['nombre','telefono','rol'],
+    `prowpp-equipo-${new Date().toISOString().slice(0,10)}.csv`);
+}
+
+// ═══════════════════════════════════════
+//  CHAT IA
+// ═══════════════════════════════════════
+function sugerir(txt) {
+  document.getElementById('chat-input').value = txt;
+  enviarMensaje();
+}
+
+function clearChat() {
+  chatHistorial = [];
+  document.getElementById('chat-messages').innerHTML = `
+    <div class="msg bot">
+      <div class="msg-avatar">🤖</div>
+      <div class="msg-bubble">Chat reiniciado. ¿En qué puedo ayudarte?</div>
+    </div>`;
+}
+
+async function enviarMensaje() {
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  input.style.height = 'auto';
+
+  const msgs = document.getElementById('chat-messages');
+  const userAv = document.getElementById('u-avatar').textContent;
+
+  msgs.insertAdjacentHTML('beforeend', `
+    <div class="msg user">
+      <div class="msg-avatar">${userAv}</div>
+      <div class="msg-bubble">${escHtml(msg)}</div>
+    </div>
+    <div class="msg bot" id="typing-indicator">
+      <div class="msg-avatar">🤖</div>
+      <div class="typing"><span></span><span></span><span></span></div>
+    </div>
+  `);
+  msgs.scrollTop = msgs.scrollHeight;
+
+  const sendBtn = document.getElementById('chat-send');
+  sendBtn.disabled = true;
+
+  try {
+    const res = await fetch('/api/asistente', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mensaje: msg, historial: chatHistorial }),
+    });
+    const data = await res.json();
+
+    chatHistorial.push({ rol: 'user', texto: msg });
+    chatHistorial.push({ rol: 'assistant', texto: data.respuesta });
+    if (chatHistorial.length > 20) chatHistorial = chatHistorial.slice(-20);
+
+    document.getElementById('typing-indicator').outerHTML = `
+      <div class="msg bot">
+        <div class="msg-avatar">🤖</div>
+        <div class="msg-bubble">${escHtml(data.respuesta)}</div>
+      </div>`;
+  } catch(e) {
+    document.getElementById('typing-indicator').outerHTML = `
+      <div class="msg bot">
+        <div class="msg-avatar">🤖</div>
+        <div class="msg-bubble">Error de conexión. Inténtalo de nuevo.</div>
+      </div>`;
+  }
+
+  sendBtn.disabled = false;
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+          .replace(/\n/g,'<br>');
+}
+
+// ═══════════════════════════════════════
+//  ARRANQUE
+// ═══════════════════════════════════════
+cargarMe();
+cargarDashboard();
+setInterval(cargarDashboard, 30000);
 </script>
 </body>
 </html>
