@@ -6,16 +6,29 @@ const db = require('./database');
 
 const app = express();
 
-// Archivos estáticos (logo, imágenes, etc.)
-app.use(express.static(path.join(__dirname, '../public')));
+// ── Sesiones persistentes en PostgreSQL ───────
+let sessionStore;
+if (process.env.DATABASE_URL) {
+  const pgSession = require('connect-pg-simple')(session);
+  sessionStore = new pgSession({
+    conString: process.env.DATABASE_URL,
+    tableName: 'session',
+    createTableIfMissing: true,
+    ssl: !process.env.DATABASE_URL.includes('localhost')
+      ? { rejectUnauthorized: false } : false,
+  });
+}
 
+// ── Middlewares ───────────────────────────────
+app.use(express.static(path.join(__dirname, '../public')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(session({
+  store: sessionStore,
   secret: process.env.SESSION_SECRET || 'prowpp-secret-2026',
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 24 * 60 * 60 * 1000 },
+  cookie: { maxAge: 7 * 24 * 60 * 60 * 1000 },
 }));
 
 // ── Rutas ─────────────────────────────────────
@@ -45,6 +58,6 @@ db.init().then(() => {
     console.log(`✅ Prowpp arrancado en puerto ${PORT}`);
   });
 }).catch(err => {
-  console.error('Error arrancando:', err);
+  console.error('❌ Error arrancando:', err);
   process.exit(1);
 });

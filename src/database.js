@@ -1,25 +1,29 @@
 require('dotenv').config();
 const knex = require('knex')({
-  client: 'sqlite3',
-  connection: { filename: './prowpp.db' },
-  useNullAsDefault: true,
+  client: 'pg',
+  connection: {
+    connectionString: process.env.DATABASE_URL,
+    ssl: process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('localhost')
+      ? { rejectUnauthorized: false }
+      : false,
+  },
 });
 
 async function init() {
-  // empresas
+  // companies
   if (!await knex.schema.hasTable('companies')) {
     await knex.schema.createTable('companies', t => {
       t.increments('id').primary();
       t.string('nombre').notNullable();
       t.string('sector').defaultTo('construcción');
-      t.enum('plan', ['basico', 'pro']).defaultTo('basico');
+      t.string('plan').defaultTo('basico');
       t.boolean('activo').defaultTo(true);
       t.timestamps(true, true);
     });
     console.log('✅ Tabla companies creada');
   }
 
-  // usuarios (jefes + super admin)
+  // users (jefes + superadmin)
   if (!await knex.schema.hasTable('users')) {
     await knex.schema.createTable('users', t => {
       t.increments('id').primary();
@@ -27,13 +31,12 @@ async function init() {
       t.string('email').unique().notNullable();
       t.string('password').notNullable();
       t.string('telefono').nullable();
-      t.enum('rol', ['superadmin', 'jefe']).defaultTo('jefe');
-      t.integer('company_id').references('companies.id').nullable();
+      t.string('rol').defaultTo('jefe');
+      t.integer('company_id').references('id').inTable('companies').nullable();
       t.boolean('activo').defaultTo(true);
       t.timestamps(true, true);
     });
 
-    // crear super admin David
     const bcrypt = require('bcryptjs');
     const hash = await bcrypt.hash(process.env.ADMIN_PASSWORD || 'prowpp2026', 10);
     await knex('users').insert({
@@ -46,14 +49,14 @@ async function init() {
     console.log('✅ Tabla users creada + super admin creado');
   }
 
-  // trabajadores
+  // workers
   if (!await knex.schema.hasTable('workers')) {
     await knex.schema.createTable('workers', t => {
       t.increments('id').primary();
       t.string('nombre').notNullable();
       t.string('telefono').notNullable();
       t.string('rol').defaultTo('Trabajador');
-      t.integer('company_id').references('companies.id').notNullable();
+      t.integer('company_id').references('id').inTable('companies').notNullable();
       t.boolean('activo').defaultTo(true);
       t.timestamps(true, true);
     });
@@ -64,9 +67,9 @@ async function init() {
   if (!await knex.schema.hasTable('fichajes')) {
     await knex.schema.createTable('fichajes', t => {
       t.increments('id').primary();
-      t.integer('worker_id').references('workers.id').notNullable();
-      t.integer('company_id').references('companies.id').notNullable();
-      t.enum('tipo', ['entrada', 'salida']).notNullable();
+      t.integer('worker_id').references('id').inTable('workers').notNullable();
+      t.integer('company_id').references('id').inTable('companies').notNullable();
+      t.string('tipo').notNullable();
       t.string('lugar').defaultTo('Sin especificar');
       t.timestamp('timestamp').notNullable();
       t.integer('duracion_minutos').nullable();
@@ -79,12 +82,12 @@ async function init() {
   if (!await knex.schema.hasTable('gastos')) {
     await knex.schema.createTable('gastos', t => {
       t.increments('id').primary();
-      t.integer('worker_id').references('workers.id').notNullable();
-      t.integer('company_id').references('companies.id').notNullable();
+      t.integer('worker_id').references('id').inTable('workers').notNullable();
+      t.integer('company_id').references('id').inTable('companies').notNullable();
       t.decimal('importe', 8, 2).notNullable();
       t.string('descripcion');
       t.string('foto_url');
-      t.enum('estado', ['pendiente', 'verificado', 'rechazado']).defaultTo('pendiente');
+      t.string('estado').defaultTo('pendiente');
       t.timestamp('timestamp').notNullable();
       t.timestamps(true, true);
     });
@@ -100,8 +103,8 @@ async function getWorkersByCompany(companyId) {
   return knex('workers').where({ company_id: companyId, activo: true }).orderBy('nombre');
 }
 async function createWorker({ nombre, telefono, rol, companyId }) {
-  const [id] = await knex('workers').insert({ nombre, telefono, rol, company_id: companyId });
-  return { id, nombre, telefono, rol };
+  const [row] = await knex('workers').insert({ nombre, telefono, rol, company_id: companyId }).returning('*');
+  return row;
 }
 async function deleteWorker(id) {
   return knex('workers').where({ id }).update({ activo: false });
@@ -112,8 +115,8 @@ async function getAllCompanies() {
   return knex('companies').where({ activo: true }).orderBy('nombre');
 }
 async function createCompany({ nombre, sector }) {
-  const [id] = await knex('companies').insert({ nombre, sector });
-  return { id, nombre };
+  const [row] = await knex('companies').insert({ nombre, sector }).returning('*');
+  return row;
 }
 async function getCompanyById(id) {
   return knex('companies').where({ id }).first();
@@ -129,8 +132,10 @@ async function getUserByPhone(telefono) {
 async function createUser({ nombre, email, password, telefono, companyId }) {
   const bcrypt = require('bcryptjs');
   const hash = await bcrypt.hash(password, 10);
-  const [id] = await knex('users').insert({ nombre, email, password: hash, telefono: telefono || null, rol: 'jefe', company_id: companyId });
-  return { id, nombre, email };
+  const [row] = await knex('users').insert({
+    nombre, email, password: hash, telefono: telefono || null, rol: 'jefe', company_id: companyId,
+  }).returning('*');
+  return row;
 }
 async function getAllUsers() {
   return knex('users').where({ activo: true }).whereNot({ rol: 'superadmin' })
@@ -152,11 +157,11 @@ async function registrarFichaje({ workerId, companyId, tipo, lugar, timestamp })
       duracionMinutos = Math.floor((timestamp - new Date(ultimaEntrada.timestamp)) / 60000);
     }
   }
-  const [id] = await knex('fichajes').insert({
+  const [row] = await knex('fichajes').insert({
     worker_id: workerId, company_id: companyId, tipo, lugar,
     timestamp: timestamp.toISOString(), duracion_minutos: duracionMinutos,
-  });
-  return { id, duracionMinutos };
+  }).returning('*');
+  return { id: row.id, duracionMinutos };
 }
 
 async function getFichajesByCompany(companyId, periodo = 'hoy') {
@@ -203,11 +208,11 @@ async function getResumenHoras(workerId) {
 
 // ── GASTOS ───────────────────────────────────
 async function registrarGasto({ workerId, companyId, importe, descripcion, fotoUrl, timestamp }) {
-  const [id] = await knex('gastos').insert({
+  const [row] = await knex('gastos').insert({
     worker_id: workerId, company_id: companyId, importe, descripcion,
     foto_url: fotoUrl, estado: 'pendiente', timestamp: timestamp.toISOString(),
-  });
-  return { id };
+  }).returning('*');
+  return row;
 }
 
 async function getGastosByCompany(companyId) {
@@ -232,21 +237,6 @@ async function updateGastoEstado(id, estado) {
   return knex('gastos').where({ id }).update({ estado });
 }
 
-async function getStatsEmpresa(companyId) {
-  const workers = await knex('workers').where({ company_id: companyId, activo: true }).count('id as total').first();
-  const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
-  const fichajesHoy = await knex('fichajes').where({ company_id: companyId }).where('timestamp', '>=', hoy.toISOString()).count('id as total').first();
-  const mesInicio = new Date(); mesInicio.setDate(1); mesInicio.setHours(0, 0, 0, 0);
-  const gastosMes = await knex('gastos').where({ company_id: companyId }).where('timestamp', '>=', mesInicio.toISOString()).sum('importe as total').first();
-  const horasMes = await knex('fichajes').where({ company_id: companyId, tipo: 'salida' }).where('timestamp', '>=', mesInicio.toISOString()).whereNotNull('duracion_minutos').sum('duracion_minutos as total').first();
-  return {
-    totalWorkers: Number(workers.total) || 0,
-    fichajesHoy: Number(fichajesHoy.total) || 0,
-    gastosMes: Number(gastosMes.total) || 0,
-    horasMes: Math.floor((Number(horasMes.total) || 0) / 60),
-  };
-}
-
 // ── ESTADO EQUIPO ────────────────────────────
 async function getEstadoEquipo(companyId) {
   const workers = await getWorkersByCompany(companyId);
@@ -262,6 +252,22 @@ async function getEstadoEquipo(companyId) {
       ultimoFichaje: ultimo ? { tipo: ultimo.tipo, hora: ultimo.timestamp, lugar: ultimo.lugar } : null,
     };
   }));
+}
+
+// ── STATS ────────────────────────────────────
+async function getStatsEmpresa(companyId) {
+  const workers = await knex('workers').where({ company_id: companyId, activo: true }).count('id as total').first();
+  const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+  const fichajesHoy = await knex('fichajes').where({ company_id: companyId }).where('timestamp', '>=', hoy.toISOString()).count('id as total').first();
+  const mesInicio = new Date(); mesInicio.setDate(1); mesInicio.setHours(0, 0, 0, 0);
+  const gastosMes = await knex('gastos').where({ company_id: companyId }).where('timestamp', '>=', mesInicio.toISOString()).sum('importe as total').first();
+  const horasMes = await knex('fichajes').where({ company_id: companyId, tipo: 'salida' }).where('timestamp', '>=', mesInicio.toISOString()).whereNotNull('duracion_minutos').sum('duracion_minutos as total').first();
+  return {
+    totalWorkers: Number(workers.total) || 0,
+    fichajesHoy: Number(fichajesHoy.total) || 0,
+    gastosMes: Number(gastosMes.total) || 0,
+    horasMes: Math.floor((Number(horasMes.total) || 0) / 60),
+  };
 }
 
 module.exports = {
